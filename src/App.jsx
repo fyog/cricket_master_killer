@@ -148,7 +148,21 @@ function ScoringGrid({ playerNames, onRestart }) {
   object used to deal with score updates
   */
   const handleScoreClick = (scoreKey) => {
+
+    /*
+    setHistory(prev)
     
+    setHistory(prev => [
+      ...prev,
+      {
+        players: JSON.parse(JSON.stringify(players)), // deep copy
+        currentPlayerIndex,
+        throwCount,
+        multiplier
+      }
+    ]);
+    */
+
     /*
     setPlayers(prevPlayers)
     handles player selection
@@ -165,14 +179,34 @@ function ScoringGrid({ playerNames, onRestart }) {
       //if the player hits one of the non-cricket numbers
       if (otherNumbers.includes(scoreKey)) {
         currentPlayer.totalScore += valueMap[scoreKey] * multiplier;
+        document.write(scoreKey);
       }
       
       //else if the player hits a cricket number
       else {
-     
+
         //if the player has made less than three throws
         if (currentHits < 3) {
-          updatedScore[scoreKey] = currentHits + multiplier;//use min function?
+          updatedScore[scoreKey] = currentHits + multiplier; //removed min function
+          while (updatedScore[scoreKey] > 3) {
+            updatedScore[scoreKey]--; 
+          }
+          //if the number is not fully closed
+          if (othersHaveNotClosed) {
+
+            //update every other player's score, taking into account the number of hits on the number that the other players have
+            for (let i = 0; i < updatedPlayers.length; i++) {
+              if (currentPlayerIndex !== i) {
+                updatedPlayers[i].totalScore += valueMap[scoreKey] * (currentHits - updatedPlayers[i].score[scoreKey]) * multiplier/2; //button presses register twice so divide by two?
+              }
+            } 
+          }
+
+          //else if the number is fully closed
+          else {
+            //currentPlayer.totalScore += valueMap[scoreKey] * multiplier;
+          }
+
 
         }
 
@@ -185,7 +219,7 @@ function ScoringGrid({ playerNames, onRestart }) {
             //update every other player's score, taking into account the number of hits on the number that the other players have
             for (let i = 0; i < updatedPlayers.length; i++) {
               if (currentPlayerIndex !== i) {
-                updatedPlayers[i].totalScore += valueMap[scoreKey] * (currentHits - updatedPlayers[i].score[scoreKey]) * multiplier/2;//why divide by 2?
+                updatedPlayers[i].totalScore += valueMap[scoreKey] * (currentHits - updatedPlayers[i].score[scoreKey]) * multiplier/2; //button presses register twice so divide by two?
               }
             } 
           }
@@ -215,6 +249,21 @@ function ScoringGrid({ playerNames, onRestart }) {
       setThrowCount(newThrowCount);
     }
   };
+
+  /*const handleUndo = () => {
+  setHistory(prev => {
+    if (prev.length === 0) return prev; // nothing to undo
+
+    const lastState = prev[prev.length - 1];
+    setPlayers(lastState.players);
+    setCurrentPlayerIndex(lastState.currentPlayerIndex);
+    setThrowCount(lastState.throwCount);
+    setMultiplier(lastState.multiplier);
+
+    return prev.slice(0, -1); // remove last history entry
+  });
+  };
+  */
  
   //------------------------------------------------------------------------------------------------------------------
   return (
@@ -234,19 +283,31 @@ function ScoringGrid({ playerNames, onRestart }) {
       </div>
       
       <div className="dropdown-score">
-        <select
-          onChange={(e) => {
-            const val = parseInt(e.target.value);
-            if (!isNaN(val)) handleScoreClick(val);
-            e.target.value = ""; // Reset after selection
-          }}
-        >
-          <option value="">Select another number</option>
-          {otherNumbers.map(num => (
-            <option key={num} value={num}>{num}</option>
-          ))}
-        </select>
-      </div>
+      <select
+        onChange={(e) => {
+        const val = e.target.value;
+
+        // If it's an empty string, do nothing
+        if (!val) return;
+
+        // If it's a number string, convert to number
+        const numVal = Number(val);
+        if (!isNaN(numVal)) {
+          handleScoreClick(numVal);
+        } else {
+          // Handle 'Miss' or 'Bull' or any future string option
+          handleScoreClick(val);
+      }
+
+      e.target.value = ""; // Reset after selection
+    }}
+  >
+    <option value="">Select another number</option>
+    {otherNumbers.map(num => (
+      <option key={num} value={num}>{num}</option>
+    ))}
+  </select>
+</div>
       <h2> Throw {throwCount + 1} / 3</h2>
       <div className = "multiplier-buttons">
       <button onClick={() => setMultiplier(1)}>Single</button>
@@ -268,12 +329,19 @@ function ScoringGrid({ playerNames, onRestart }) {
             </ul>
           </div>
         ))}
+        
       </div>
-
+       <button className="undo-button" onClick={onRestart}>
+        Custom Score
+      </button>
+      <button className="undo-button" onClick={onRestart}>
+        Undo
+      </button>
       <button className="restart-button" onClick={onRestart}>
         Restart Game
       </button>
     </div>
+    
   );
 }
 //------------------------------------------------------------------------------------------------------------------

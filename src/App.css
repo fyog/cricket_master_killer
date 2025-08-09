@@ -22,7 +22,7 @@
   color:#39e687;
 }
 
-.Dart-board {
+.dart-board {
   height: 500px;
   width: auto;
   margin-bottom: 20px;
@@ -147,6 +147,17 @@ button, select {
 .restart-button:hover {
   color: #000000;
 }
+
+/* game controls button */
+.undo-button {
+  background-color: #000000;
+  font-weight: 700;
+  font-size: 18px;
+}
+.undo-button:hover {
+  color: #39e687;
+}
+
 
 /* Dropdown styling */
 .dropdown-score select {
