@@ -157,7 +157,7 @@ function ScoringGrid({ playerNames, onRestart }) {
   object used to deal with score updates
   */
   const handleScoreClick = (scoreKey) => {
-  // save current state for undo
+  //save current state for undo
   setHistory(prev => [
     ...prev,
     {
@@ -178,31 +178,29 @@ function ScoringGrid({ playerNames, onRestart }) {
       (p, i) => i !== currentPlayerIndex && p.score[scoreKey] < 3
     );
 
-    // non-cricket number → straight score
+    //non-cricket number → straight score
     if (otherNumbers.includes(scoreKey)) {
       current.totalScore += valueMap[scoreKey] * multiplier;
+
+    //cricket number
     } else {
-      // cricket number
+
       if (currentHits < 3) {
         updatedScore[scoreKey] = currentHits + multiplier;
 
-        // extra hits over 3 → apply modifier multiplier
         const extraHits = Math.max(0, updatedScore[scoreKey] - 3);
         if (extraHits > 0) {
           updatedScore[scoreKey] = 3;
-          setModifier(prev => prev * (2 * extraHits));
-
-          // award points to other players
           updatedPlayers.forEach((p, i) => {
             if (i !== currentPlayerIndex) {
-              const diff = Math.max(0, 3 - p.score[scoreKey]);
-              p.totalScore += valueMap[scoreKey] * diff * multiplier * (modifier) / 4;
+              const diff = Math.max(0,updatedScore[scoreKey] - p.score[scoreKey]);
+              p.totalScore += valueMap[scoreKey] * extraHits * multiplier;
             }
           });
         }
       } else {
 
-        // already closed
+        //not fully closed
         if (othersHaveNotClosed) {
           updatedPlayers.forEach((p, i) => {
             if (i !== currentPlayerIndex) {
@@ -210,7 +208,10 @@ function ScoringGrid({ playerNames, onRestart }) {
               p.totalScore += valueMap[scoreKey] * diff * multiplier / 2;
             }
           });
-        } else {
+        } 
+        
+        //fully closed
+        else {
           current.totalScore += valueMap[scoreKey] * multiplier;
         }
       }
