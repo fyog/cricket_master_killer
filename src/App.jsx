@@ -179,35 +179,41 @@ function ScoringGrid({ playerNames, onRestart }) {
       //if the player hits one of the non-cricket numbers
       if (otherNumbers.includes(scoreKey)) {
         currentPlayer.totalScore += valueMap[scoreKey] * multiplier;
-        document.write(scoreKey);
       }
+      
       
       //else if the player hits a cricket number
       else {
 
         //if the player has made less than three throws
         if (currentHits < 3) {
+          let modifier = 1;
           updatedScore[scoreKey] = currentHits + multiplier; //removed min function
+
+          //max score allowed is 3, so subtract from the score until it is <= 3 and adjust the multiplier each time
           while (updatedScore[scoreKey] > 3) {
-            updatedScore[scoreKey]--; 
+            updatedScore[scoreKey]--;
+            modifier++;
           }
+          //document.write(modifier);
+          //update multiplier based on the number of hits made after closing the number
+          setMultiplier(multiplier * modifier);
+
           //if the number is not fully closed
           if (othersHaveNotClosed) {
 
             //update every other player's score, taking into account the number of hits on the number that the other players have
             for (let i = 0; i < updatedPlayers.length; i++) {
               if (currentPlayerIndex !== i) {
-                updatedPlayers[i].totalScore += valueMap[scoreKey] * (currentHits - updatedPlayers[i].score[scoreKey]) * multiplier/2; //button presses register twice so divide by two?
+                updatedPlayers[i].totalScore += valueMap[scoreKey] * (currentHits - updatedPlayers[i].score[scoreKey]) * multiplier / 2; //button presses register twice so divide by two (FIX)
               }
             } 
           }
 
           //else if the number is fully closed
           else {
-            //currentPlayer.totalScore += valueMap[scoreKey] * multiplier;
+            currentPlayer.totalScore += valueMap[scoreKey] * multiplier;
           }
-
-
         }
 
         //else if the player has made three throws
@@ -240,11 +246,12 @@ function ScoringGrid({ playerNames, onRestart }) {
     });
 
     const newThrowCount = throwCount + 1;
-
+    
+    //once a player has made their three throws
     if (newThrowCount >= 3) {
-      setThrowCount(0);
-      setCurrentPlayerIndex((prev) => (prev + 1) % playerNames.length);
-      setMultiplier(1);
+      setThrowCount(0); //reset the throw count
+      setCurrentPlayerIndex((prev) => (prev + 1) % playerNames.length); //update the player index
+      setMultiplier(1); //reset the multiplier
     } else {
       setThrowCount(newThrowCount);
     }
@@ -331,15 +338,9 @@ function ScoringGrid({ playerNames, onRestart }) {
         ))}
         
       </div>
-       <button className="undo-button" onClick={onRestart}>
-        Custom Score
-      </button>
-      <button className="undo-button" onClick={onRestart}>
-        Undo
-      </button>
-      <button className="restart-button" onClick={onRestart}>
-        Restart Game
-      </button>
+      <button className="undo-button" onClick={onRestart}> Custom Score </button>
+      <button className="undo-button" onClick={onRestart}> Undo </button>
+      <button className="restart-button" onClick={onRestart}> Restart Game </button>
     </div>
     
   );
