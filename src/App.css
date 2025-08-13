@@ -3,7 +3,7 @@
 }
 
 .App-header {
-  background-color: #63c8fa;
+  background-color: #a2ef67;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -138,7 +138,7 @@ button, select {
 
 /* Restart button */
 .restart-button {
-  background: linear-gradient(145deg, #a7ea78, #a7ea78
+  background: linear-gradient(145deg, #f42101, #f42101
   );
   
   font-weight: 700;
