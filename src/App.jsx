@@ -187,14 +187,14 @@ function ScoringGrid({ playerNames, onRestart }) {
 
       if (currentHits < 3) {
         updatedScore[scoreKey] = currentHits + multiplier;
-
         const extraHits = Math.max(0, updatedScore[scoreKey] - 3);
+        //if (updatedScore[scoreKey] > 3) { document.write(extraHits);}
         if (extraHits > 0) {
           updatedScore[scoreKey] = 3;
           updatedPlayers.forEach((p, i) => {
             if (i !== currentPlayerIndex) {
-              const diff = Math.max(0,updatedScore[scoreKey] - p.score[scoreKey]);
-              p.totalScore += valueMap[scoreKey] * extraHits * multiplier;
+              const diff = Math.max(0, updatedScore[scoreKey] - p.score[scoreKey]);
+              p.totalScore += valueMap[scoreKey] * extraHits * diff / 2;
             }
           });
         }
@@ -313,7 +313,6 @@ function ScoringGrid({ playerNames, onRestart }) {
         ))}
         
       </div>
-      <button className="undo-button" onClick={onRestart}> Custom Score </button>
       <button className="undo-button" onClick={handleUndo}> Undo </button>
       <button className="restart-button" onClick={onRestart}> Restart Game </button>
     </div>  
