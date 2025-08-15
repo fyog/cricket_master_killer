@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dart_board from './dart_board.svg';
 import './App.css';
 
@@ -119,13 +119,15 @@ function ScoringGrid({ playerNames, onRestart }) {
   const scoringNumbers = [20, 19, 18, 17, 16, 15, 'Bull'];
   const otherNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 'Miss'];
   const [history, setHistory] = useState([])
+  const [round, setRound] = useState(1);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [throwCount, setThrowCount] = useState(0);
   const [players, setPlayers] = useState([]);
   const [multiplier, setMultiplier] = useState(1);
   const currentPlayer = players[currentPlayerIndex];
   const [modifier, setModifier] = useState(1);
-  
+  const totalTurns = useRef(0);
+
   //creates a mapping such that 1:20 is mapped to 1:20, Bull:25, and Miss:25
   //ie. mapping = 1:1, 2:2, 3:3, 4:4, ..., 20:20, Bull:25, Miss:25
   const valueMap = {
@@ -160,13 +162,7 @@ function ScoringGrid({ playerNames, onRestart }) {
   //save current state for undo
   setHistory(prev => [
     ...prev,
-    {
-      players: JSON.parse(JSON.stringify(players)),
-      currentPlayerIndex,
-      throwCount,
-      multiplier,
-      modifier
-    }
+    { players: JSON.parse(JSON.stringify(players)), currentPlayerIndex, throwCount, multiplier, modifier, round }
   ]);
 
   setPlayers(prevPlayers => {
@@ -177,8 +173,8 @@ function ScoringGrid({ playerNames, onRestart }) {
     const othersHaveNotClosed = updatedPlayers.some(
       (p, i) => i !== currentPlayerIndex && p.score[scoreKey] < 3
     );
-
-    //non-cricket number → straight score
+     
+    //non-cricket number
     if (otherNumbers.includes(scoreKey)) {
       current.totalScore += valueMap[scoreKey] * multiplier;
 
@@ -188,8 +184,12 @@ function ScoringGrid({ playerNames, onRestart }) {
       if (currentHits < 3) {
         updatedScore[scoreKey] = currentHits + multiplier;
         const extraHits = Math.max(0, updatedScore[scoreKey] - 3);
-        //if (updatedScore[scoreKey] > 3) { document.write(extraHits);}
+        
+        //extra hits
         if (extraHits > 0) {
+          
+          //not fully closed
+          if (othersHaveNotClosed) {
           updatedScore[scoreKey] = 3;
           updatedPlayers.forEach((p, i) => {
             if (i !== currentPlayerIndex) {
@@ -197,13 +197,24 @@ function ScoringGrid({ playerNames, onRestart }) {
               p.totalScore += valueMap[scoreKey] * extraHits * diff / 2;
             }
           });
+          
+          //fully closed
+          } else {
+            const diff = Math.max(0, updatedScore[scoreKey] - 3);
+            updatedScore[scoreKey] = 3;
+            current.totalScore += valueMap[scoreKey] * diff;
+          }
         }
+
+      //non-cricket number
       } else {
 
         //not fully closed
         if (othersHaveNotClosed) {
           updatedPlayers.forEach((p, i) => {
-            if (i !== currentPlayerIndex) {
+
+            //for every player but the current player
+            if (i !== currentPlayerIndex) { 
               const diff = Math.max(0, 3 - p.score[scoreKey]);
               p.totalScore += valueMap[scoreKey] * diff * multiplier / 2;
             }
@@ -217,6 +228,12 @@ function ScoringGrid({ playerNames, onRestart }) {
       }
     }
 
+    //update the round number
+    totalTurns.current++;
+    if (totalTurns.current * 3 % players.length == 0) {
+      setRound(prev => prev + 1);
+    }
+    
     current.score = updatedScore;
     updatedPlayers[currentPlayerIndex] = current;
     return updatedPlayers;
@@ -242,15 +259,18 @@ function ScoringGrid({ playerNames, onRestart }) {
     setCurrentPlayerIndex(lastState.currentPlayerIndex);
     setThrowCount(lastState.throwCount);
     setMultiplier(lastState.multiplier);
+    setRound(lastState.round);
 
     return prev.slice(0, -1); //remove last history entry
   });
+  
   };
   
  
   //------------------------------------------------------------------------------------------------------------------
   return (
   <div className="scoring-grid">
+  <h3>Round: {round}</h3>
   <h2>{currentPlayer?.name}</h2>
 
     <div className="grid">
